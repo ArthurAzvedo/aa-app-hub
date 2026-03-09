@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A/A App Hub — Time Tracker</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500&f[]=sentient@400,400i&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F6F6F6;
+  --white: #ffffff;
+  --text: #181818;
+  --muted: #888;
+  --border: #E0DFD9;
+  --radius: 14px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'Satoshi', sans-serif; font-weight: 400; min-height: 100vh; overflow-x: hidden; }
+
+/* ── NAV ── */
+.nav-wrap { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 200; width: calc(100% - 80px); max-width: 1000px; }
+nav { background: rgba(255,255,255,0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.nav-left a { font-size: 12px; font-weight: 500; color: var(--muted); text-decoration: none; transition: color 0.3s; }
+.nav-left a:hover { color: var(--text); }
+.nav-center { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; }
+.nav-center .nav-logo-svg { height: 26px; width: auto; }
+.nav-back { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--muted); text-decoration: none; transition: color 0.3s; }
+.nav-back:hover { color: var(--text); }
+.nav-back svg { transition: transform 0.3s; }
+.nav-back:hover svg { transform: translateX(-2px); }
+
+/* ── PAGE HEADER ── */
+.page-header { padding: 120px 40px 48px; max-width: 1100px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+.page-header-left { }
+.page-tag { font-size: 10px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.page-tag::before { content: ''; width: 20px; height: 1px; background: var(--muted); }
+.page-title { font-size: clamp(32px, 4vw, 48px); font-weight: 500; letter-spacing: -1.5px; line-height: 1.05; }
+.page-title em { font-family: 'Sentient', serif; font-style: italic; font-weight: 400; }
+
+/* ── MAIN LAYOUT ── */
+.main-wrap { max-width: 1100px; margin: 0 auto; padding: 0 40px 80px; display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+
+/* ── CARDS ── */
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.card-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-header-title { font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.card-body { padding: 24px; }
+
+/* ── TIMER ── */
+.timer-display { text-align: center; padding: 32px 24px; }
+.timer-clock { font-size: 52px; font-weight: 400; letter-spacing: -2px; font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 6px; font-family: 'Satoshi', sans-serif; }
+.timer-clock.running { color: #1a7a35; }
+.timer-project-name { font-size: 13px; color: var(--muted); min-height: 20px; }
+
+.timer-controls { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 10px; }
+
+.form-label { font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
+
+input[type="text"], select {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 11px 14px; font-family: 'Satoshi', sans-serif; font-size: 13px; font-weight: 400;
+  color: var(--text); outline: none; transition: border-color 0.2s; appearance: none;
+}
+input[type="text"]::placeholder { color: #bbb; }
+input[type="text"]:focus, select:focus { border-color: var(--text); }
+
+.btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 12px; border: none; border-radius: 8px; font-family: 'Satoshi', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; cursor: pointer; transition: opacity 0.2s, background 0.2s; }
+.btn-primary { background: var(--text); color: #fff; }
+.btn-primary:hover { opacity: 0.75; }
+.btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-danger { background: #fff0f0; color: #cc3333; border: 1px solid #f0d0d0; }
+.btn-danger:hover { background: #ffe0e0; }
+.btn-success { background: #1a7a35; color: #fff; }
+.btn-success:hover { opacity: 0.85; }
+.btn-ghost { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--text); }
+.btn-sm { padding: 7px 12px; width: auto; font-size: 11px; }
+
+/* ── PROJECT PILLS ── */
+.project-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; margin-bottom: 10px; }
+.project-pill {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  font-size: 13px;
+}
+.project-pill:hover { border-color: var(--text); }
+.project-pill.selected { background: var(--text); color: #fff; border-color: var(--text); }
+.project-pill .proj-color { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.project-pill.selected .proj-delete { color: rgba(255,255,255,0.5); }
+.proj-delete { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 0 2px; line-height: 1; transition: color 0.2s; }
+.proj-delete:hover { color: #cc3333; }
+
+/* ── ENTRIES TABLE ── */
+.entries-wrap { grid-column: 2; display: flex; flex-direction: column; gap: 20px; }
+
+.summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.summary-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
+.summary-card .s-label { font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.summary-card .s-value { font-size: 26px; font-weight: 500; letter-spacing: -1px; color: var(--text); }
+.summary-card .s-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* View tabs */
+.tabs { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px; align-self: flex-start; }
+.tab { padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--muted); transition: all 0.2s; }
+.tab.active { background: var(--white); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+.table-header-row { display: flex; align-items: center; justify-content: space-between; }
+
+/* Entries table */
+.entries-table { width: 100%; border-collapse: collapse; }
+.entries-table th { font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.entries-table td { font-size: 13px; padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.entries-table tr:last-child td { border-bottom: none; }
+.entries-table tr:hover td { background: var(--bg); }
+.proj-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--bg); border: 1px solid var(--border); }
+
+.empty-state { text-align: center; padding: 60px 24px; color: var(--muted); }
+.empty-state .e-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+.empty-state p { font-size: 13px; }
+
+/* Running indicator */
+.running-badge { display: inline-flex; align-items: center; gap: 5px; background: #e6fff0; color: #1a7a35; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 500; letter-spacing: 0.5px; }
+.running-dot { width: 5px; height: 5px; border-radius: 50%; background: #1a7a35; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ── FOOTER ── */
+footer { background: #000; padding: 75px 40px 75px; }
+.footer-top { max-width: 1100px; margin: 0 auto; display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; }
+.footer-logo-svg { height: 48px; width: auto; }
+.footer-links { display: flex; gap: 32px; flex-wrap: wrap; justify-content: flex-end; }
+.footer-links a { font-size: 12px; color: rgba(255,255,255,0.35); text-decoration: none; transition: color 0.3s; }
+.footer-links a:hover { color: #fff; }
+.footer-bottom { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.footer-copy { font-size: 11px; color: rgba(255,255,255,0.2); }
+
+@media (max-width: 900px) {
+  .nav-wrap { width: calc(100% - 32px); top: 12px; }
+  .page-header { padding: 100px 24px 32px; flex-direction: column; align-items: flex-start; gap: 20px; }
+  .main-wrap { padding: 0 20px 60px; grid-template-columns: 1fr; }
+  .entries-wrap { grid-column: 1; }
+  .summary-row { grid-template-columns: 1fr 1fr; }
+  .footer-top { flex-direction: column; gap: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav-wrap">
+  <nav>
+    <div class="nav-left">
+      <a href="aa-tools-hub.html" class="nav-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M5 12l7 7M5 12l7-7"/></svg>
+        App Hub
+      </a>
+    </div>
+    <div class="nav-center">
+      <svg class="nav-logo-svg" height="1200" viewBox="0 0 6358 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M599.943 0L0 903.526V903.83L180.644 1023.73L258.878 905.807C302.747 936.142 350.873 960.852 402.192 978.718C431.007 988.754 460.81 996.737 491.45 1002.29V1199.81H708.284V1002.29C738.924 996.585 768.727 988.754 797.466 978.718C848.861 960.852 896.911 936.142 940.856 905.731L1019.24 1023.73L1199.89 903.754L599.943 0ZM491.45 779.067C450.927 766.826 413.368 747.667 380.144 723.186L491.45 555.542V779.067ZM708.284 779.067V555.39L819.59 723.034C786.366 747.591 748.807 766.674 708.284 779.067Z" fill="black"/>
+<path d="M1731.73 894H1672.38L1886.19 311.913H1958.55L2174.8 894H2113.82L2056.92 739.536H1788.64L1731.73 894ZM1914.65 394.023L1806.52 688.318H2038.22L1929.28 394.023C1926.84 385.893 1922.78 376.138 1921.96 370.447C1921.15 375.325 1917.9 385.893 1914.65 394.023ZM2235.31 894H2180.03L2406.85 311.913H2463.76L2235.31 894ZM2473.66 894H2414.31L2628.12 311.913H2700.48L2916.73 894H2855.76L2798.85 739.536H2530.57L2473.66 894ZM2656.58 394.023L2548.45 688.318H2780.15L2671.21 394.023C2668.77 385.893 2664.71 376.138 2663.89 370.447C2663.08 375.325 2659.83 385.893 2656.58 394.023ZM3228.81 894H3145.88L3360.51 306.222H3449.12L3664.56 894H3580.82L3527.98 747.665H3280.84L3228.81 894ZM3394.65 433.046L3305.23 678.563H3504.4L3414.16 433.046C3410.1 421.664 3406.03 407.844 3404.41 398.901C3402.78 407.031 3398.72 420.851 3394.65 433.046ZM3721.56 1072.04V496.457H3790.66L3796.35 567.999C3823.18 513.53 3876.83 485.076 3940.25 485.076C4054.06 485.076 4124.79 570.438 4124.79 692.383C4124.79 813.516 4058.13 904.569 3940.25 904.569C3876.83 904.569 3823.99 877.741 3797.98 828.962V1072.04H3721.56ZM3798.79 695.635C3798.79 776.932 3845.94 835.466 3923.99 835.466C4002.03 835.466 4048.37 776.932 4048.37 695.635C4048.37 613.525 4002.03 554.991 3923.99 554.991C3845.94 554.991 3798.79 612.712 3798.79 695.635ZM4200.89 1072.04V496.457H4269.99L4275.68 567.999C4302.51 513.53 4356.17 485.076 4419.58 485.076C4533.4 485.076 4604.12 570.438 4604.12 692.383C4604.12 813.516 4537.46 904.569 4419.58 904.569C4356.17 904.569 4303.33 877.741 4277.31 828.962V1072.04H4200.89ZM4278.12 695.635C4278.12 776.932 4325.28 835.466 4403.32 835.466C4481.37 835.466 4527.71 776.932 4527.71 695.635C4527.71 613.525 4481.37 554.991 4403.32 554.991C4325.28 554.991 4278.12 612.712 4278.12 695.635ZM4987.07 894H4907.4V306.222H4987.07V559.056H5278.12V306.222H5357.79V894H5278.12V633.036H4987.07V894ZM5747.75 496.457H5823.36V894H5755.07L5746.94 833.84C5724.18 875.302 5671.33 903.756 5612.8 903.756C5520.12 903.756 5468.09 841.157 5468.09 743.6V496.457H5544.51V718.398C5544.51 803.76 5581.09 836.279 5639.63 836.279C5709.54 836.279 5747.75 791.566 5747.75 706.204V496.457ZM5995.21 894H5926.1V295.654H6002.52V564.747C6028.54 512.717 6082.19 485.076 6147.23 485.076C6261.05 485.076 6329.34 574.503 6329.34 697.261C6329.34 817.581 6257.8 903.756 6142.35 903.756C6079.76 903.756 6026.91 876.115 6000.9 821.646L5995.21 894ZM6003.34 694.009C6003.34 776.932 6050.49 834.653 6128.53 834.653C6206.58 834.653 6252.92 776.119 6252.92 694.009C6252.92 612.712 6206.58 554.178 6128.53 554.178C6050.49 554.178 6003.34 612.712 6003.34 694.009Z" fill="black"/>
+</svg>
+    </div>
+    <div style="width:80px"></div>
+  </nav>
+</div>
+
+<!-- HEADER -->
+<div class="page-header">
+  <div class="page-header-left">
+    <p class="page-tag">Produtividade</p>
+    <h1 class="page-title">Time <em>Tracker</em></h1>
+  </div>
+  <div id="exportArea" style="display:none">
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar CSV
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-wrap">
+
+  <!-- LEFT — Timer + Projects -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+
+    <!-- Timer card -->
+    <div class="card">
+      <div class="timer-display">
+        <div class="timer-clock" id="timerDisplay">00:00:00</div>
+        <div class="timer-project-name" id="timerProjectName">Nenhum projeto selecionado</div>
+      </div>
+      <div class="timer-controls">
+        <div>
+          <label class="form-label">Projeto ativo</label>
+          <select id="projectSelect" onchange="selectProject(this.value)">
+            <option value="">Selecione um projeto...</option>
+          </select>
+        </div>
+        <div id="timerBtnWrap" style="display:flex; gap:8px;">
+          <button class="btn btn-primary" id="startBtn" onclick="startTimer()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Iniciar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projects card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-title">Projetos</span>
+        <span id="projCount" style="font-size:11px; color:var(--muted)">0</span>
+      </div>
+      <div class="card-body">
+        <div class="project-list" id="projectList"></div>
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <input type="text" id="newProjectInput" placeholder="Nome do projeto..." onkeydown="if(event.key==='Enter') addProject()" />
+          <button class="btn btn-ghost btn-sm" style="width:auto; white-space:nowrap" onclick="addProject()">+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT — Summary + Entries -->
+  <div class="entries-wrap">
+
+    <!-- Summary cards -->
+    <div class="summary-row">
+      <div class="summary-card">
+        <div class="s-label">Hoje</div>
+        <div class="s-value" id="summaryToday">0h 00m</div>
+        <div class="s-sub" id="summaryTodayEntries">0 registros</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-label">Esta semana</div>
+        <div class="s-value" id="summaryWeek">0h 00m</div>
+        <div class="s-sub" id="summaryWeekEntries">0 registros</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-label">Este mês</div>
+        <div class="s-value" id="summaryMonth">0h 00m</div>
+        <div class="s-sub" id="summaryMonthProjects">0 projetos</div>
+      </div>
+    </div>
+
+    <!-- Entries table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="table-header-row" style="width:100%">
+          <div class="tabs">
+            <button class="tab active" onclick="setView('all', this)">Todos</button>
+            <button class="tab" onclick="setView('today', this)">Hoje</button>
+            <button class="tab" onclick="setView('week', this)">Semana</button>
+            <button class="tab" onclick="setView('month', this)">Mês</button>
+          </div>
+        </div>
+      </div>
+      <div id="entriesContainer" style="overflow-x:auto">
+        <div class="empty-state">
+          <div class="e-icon">⏱</div>
+          <p>Nenhum registro ainda.<br>Selecione um projeto e inicie o timer.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <svg class="footer-logo-svg" height="1200" viewBox="0 0 6359 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M599.943 0L0 903.526V903.83L180.644 1023.73L258.878 905.807C302.747 936.142 350.873 960.852 402.192 978.718C431.007 988.754 460.81 996.737 491.45 1002.29V1199.81H708.284V1002.29C738.924 996.585 768.727 988.754 797.466 978.718C848.861 960.852 896.911 936.142 940.856 905.731L1019.24 1023.73L1199.89 903.754L599.943 0ZM491.45 779.067C450.927 766.826 413.368 747.667 380.144 723.186L491.45 555.542V779.067ZM708.284 779.067V555.39L819.59 723.034C786.366 747.591 748.807 766.674 708.284 779.067Z" fill="white"/>
+<path d="M1731.73 894H1672.38L1886.19 311.913H1958.55L2174.8 894H2113.82L2056.92 739.536H1788.64L1731.73 894ZM1914.65 394.023L1806.52 688.318H2038.22L1929.28 394.023C1926.84 385.893 1922.78 376.138 1921.96 370.447C1921.15 375.325 1917.9 385.893 1914.65 394.023ZM2235.31 894H2180.03L2406.85 311.913H2463.76L2235.31 894ZM2473.66 894H2414.31L2628.12 311.913H2700.48L2916.73 894H2855.76L2798.85 739.536H2530.57L2473.66 894ZM2656.58 394.023L2548.45 688.318H2780.15L2671.21 394.023C2668.77 385.893 2664.71 376.138 2663.89 370.447C2663.08 375.325 2659.83 385.893 2656.58 394.023ZM3228.81 894H3145.88L3360.51 306.222H3449.12L3664.56 894H3580.82L3527.98 747.665H3280.84L3228.81 894ZM3394.65 433.046L3305.23 678.563H3504.4L3414.16 433.046C3410.1 421.664 3406.03 407.844 3404.41 398.901C3402.78 407.031 3398.72 420.851 3394.65 433.046ZM3721.56 1072.04V496.457H3790.66L3796.35 567.999C3823.18 513.53 3876.83 485.076 3940.25 485.076C4054.06 485.076 4124.79 570.438 4124.79 692.383C4124.79 813.516 4058.13 904.569 3940.25 904.569C3876.83 904.569 3823.99 877.741 3797.98 828.962V1072.04H3721.56ZM3798.79 695.635C3798.79 776.932 3845.94 835.466 3923.99 835.466C4002.03 835.466 4048.37 776.932 4048.37 695.635C4048.37 613.525 4002.03 554.991 3923.99 554.991C3845.94 554.991 3798.79 612.712 3798.79 695.635ZM4200.89 1072.04V496.457H4269.99L4275.68 567.999C4302.51 513.53 4356.17 485.076 4419.58 485.076C4533.4 485.076 4604.12 570.438 4604.12 692.383C4604.12 813.516 4537.46 904.569 4419.58 904.569C4356.17 904.569 4303.33 877.741 4277.31 828.962V1072.04H4200.89ZM4278.12 695.635C4278.12 776.932 4325.28 835.466 4403.32 835.466C4481.37 835.466 4527.71 776.932 4527.71 695.635C4527.71 613.525 4481.37 554.991 4403.32 554.991C4325.28 554.991 4278.12 612.712 4278.12 695.635ZM4987.07 894H4907.4V306.222H4987.07V559.056H5278.12V306.222H5357.79V894H5278.12V633.036H4987.07V894ZM5747.75 496.457H5823.36V894H5755.07L5746.94 833.84C5724.18 875.302 5671.33 903.756 5612.8 903.756C5520.12 903.756 5468.09 841.157 5468.09 743.6V496.457H5544.51V718.398C5544.51 803.76 5581.09 836.279 5639.63 836.279C5709.54 836.279 5747.75 791.566 5747.75 706.204V496.457ZM5995.21 894H5926.1V295.654H6002.52V564.747C6028.54 512.717 6082.19 485.076 6147.23 485.076C6261.05 485.076 6329.34 574.503 6329.34 697.261C6329.34 817.581 6257.8 903.756 6142.35 903.756C6079.76 903.756 6026.91 876.115 6000.9 821.646L5995.21 894ZM6003.34 694.009C6003.34 776.932 6050.49 834.653 6128.53 834.653C6206.58 834.653 6252.92 776.119 6252.92 694.009C6252.92 612.712 6206.58 554.178 6128.53 554.178C6050.49 554.178 6003.34 612.712 6003.34 694.009Z" fill="white"/>
+</svg>
+    </div>
+    <div class="footer-links">
+      <a href="aa-tools-hub.html">App Hub</a>
+      <a href="instagram-downloader.html">IG Downloader</a>
+      <a href="https://arthurazevedostudio.framer.website" target="_blank">Site Pessoal</a>
+      <a href="https://arthurazevedostudio.framer.website/proposta" target="_blank">Solicitar Proposta</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2025 Arthur Azevedo Studio. Todos os direitos reservados.</p>
+    <p class="footer-copy">Ferramenta para uso interno.</p>
+  </div>
+</footer>
+
+<script>
+// ── STATE ──
+let projects = JSON.parse(localStorage.getItem('tt_projects') || '[]');
+let entries  = JSON.parse(localStorage.getItem('tt_entries')  || '[]');
+let running  = JSON.parse(localStorage.getItem('tt_running')  || 'null');
+let timerInterval = null;
+let currentView = 'all';
+const COLORS = ['#181818','#555','#888','#1a7a35','#7a1a1a','#1a3a7a','#7a5a1a','#4a1a7a'];
+
+// ── INIT ──
+function init() {
+  renderProjects();
+  renderEntries();
+  updateSummary();
+  if (running) resumeRunning();
+  if (entries.length) document.getElementById('exportArea').style.display = 'block';
+}
+
+function save() {
+  localStorage.setItem('tt_projects', JSON.stringify(projects));
+  localStorage.setItem('tt_entries', JSON.stringify(entries));
+  localStorage.setItem('tt_running', JSON.stringify(running));
+}
+
+// ── PROJECTS ──
+function addProject() {
+  const inp = document.getElementById('newProjectInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (projects.find(p => p.name.toLowerCase() === name.toLowerCase())) { inp.value = ''; return; }
+  projects.push({ id: Date.now().toString(), name, color: COLORS[projects.length % COLORS.length] });
+  save(); renderProjects(); inp.value = '';
+}
+
+function deleteProject(id) {
+  if (running && running.projectId === id) stopTimer();
+  projects = projects.filter(p => p.id !== id);
+  save(); renderProjects();
+}
+
+function selectProject(id) {
+  document.getElementById('projectSelect').value = id;
+  const proj = projects.find(p => p.id === id);
+  document.getElementById('timerProjectName').textContent = proj ? proj.name : 'Nenhum projeto selecionado';
+  document.querySelectorAll('.project-pill').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === id);
+  });
+}
+
+function renderProjects() {
+  const list = document.getElementById('projectList');
+  const sel  = document.getElementById('projectSelect');
+  const cur  = sel.value;
+  sel.innerHTML = '<option value="">Selecione um projeto...</option>';
+  list.innerHTML = '';
+  projects.forEach(p => {
+    // dropdown
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    sel.appendChild(opt);
+    // pill
+    const pill = document.createElement('div');
+    pill.className = 'project-pill' + (running && running.projectId === p.id ? ' selected' : '');
+    pill.dataset.id = p.id;
+    pill.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;flex:1" onclick="selectProject('${p.id}')">
+        <div class="proj-color" style="background:${p.color}"></div>
+        <span>${p.name}</span>
+      </div>
+      <button class="proj-delete" onclick="event.stopPropagation();deleteProject('${p.id}')" title="Remover">×</button>
+    `;
+    list.appendChild(pill);
+  });
+  if (cur) sel.value = cur;
+  document.getElementById('projCount').textContent = projects.length;
+}
+
+// ── TIMER ──
+function startTimer() {
+  const id = document.getElementById('projectSelect').value;
+  if (!id) { document.getElementById('projectSelect').focus(); return; }
+  const proj = projects.find(p => p.id === id);
+  running = { projectId: id, projectName: proj.name, start: Date.now() };
+  save();
+  startTicking();
+  updateTimerUI(true);
+  renderProjects();
+}
+
+function stopTimer() {
+  if (!running) return;
+  clearInterval(timerInterval);
+  const duration = Math.floor((Date.now() - running.start) / 1000);
+  if (duration >= 3) {
+    const entry = {
+      id: Date.now().toString(),
+      projectId: running.projectId,
+      projectName: running.projectName,
+      date: new Date(running.start).toLocaleDateString('pt-BR'),
+      dateISO: new Date(running.start).toISOString().split('T')[0],
+      startTime: new Date(running.start).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}),
+      endTime: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}),
+      duration
+    };
+    entries.unshift(entry);
+    document.getElementById('exportArea').style.display = 'block';
+  }
+  running = null;
+  save();
+  document.getElementById('timerDisplay').textContent = '00:00:00';
+  document.getElementById('timerDisplay').classList.remove('running');
+  updateTimerUI(false);
+  renderProjects();
+  renderEntries();
+  updateSummary();
+}
+
+function resumeRunning() {
+  startTicking();
+  const proj = projects.find(p => p.id === running.projectId);
+  if (proj) document.getElementById('projectSelect').value = running.projectId;
+  document.getElementById('timerProjectName').textContent = running.projectName;
+  updateTimerUI(true);
+  renderProjects();
+}
+
+function startTicking() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - running.start) / 1000);
+    document.getElementById('timerDisplay').textContent = formatDuration(elapsed);
+    document.getElementById('timerDisplay').classList.add('running');
+  }, 500);
+}
+
+function updateTimerUI(isRunning) {
+  const wrap = document.getElementById('timerBtnWrap');
+  if (isRunning) {
+    wrap.innerHTML = `
+      <button class="btn btn-danger" onclick="stopTimer()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        Parar
+      </button>
+      <div class="running-badge"><div class="running-dot"></div>Gravando</div>
+    `;
+  } else {
+    wrap.innerHTML = `
+      <button class="btn btn-primary" id="startBtn" onclick="startTimer()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Iniciar
+      </button>
+    `;
+  }
+}
+
+// ── ENTRIES ──
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  save(); renderEntries(); updateSummary();
+  if (!entries.length) document.getElementById('exportArea').style.display = 'none';
+}
+
+function setView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderEntries();
+}
+
+function getFilteredEntries() {
+  const now = new Date();
+  const todayISO = now.toISOString().split('T')[0];
+  const weekAgo = new Date(now - 7 * 86400000).toISOString().split('T')[0];
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  if (currentView === 'today') return entries.filter(e => e.dateISO === todayISO);
+  if (currentView === 'week')  return entries.filter(e => e.dateISO >= weekAgo);
+  if (currentView === 'month') return entries.filter(e => e.dateISO >= monthStart);
+  return entries;
+}
+
+function renderEntries() {
+  const container = document.getElementById('entriesContainer');
+  const filtered = getFilteredEntries();
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state"><div class="e-icon">⏱</div><p>Nenhum registro encontrado.</p></div>`;
+    return;
+  }
+  const proj = projects.reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+  const rows = filtered.map(e => {
+    const color = (proj[e.projectId] || {}).color || '#888';
+    return `<tr>
+      <td><span class="proj-badge"><span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block"></span>${e.projectName}</span></td>
+      <td>${e.date}</td>
+      <td style="color:var(--muted)">${e.startTime} → ${e.endTime}</td>
+      <td style="font-weight:500;font-variant-numeric:tabular-nums">${formatDuration(e.duration)}</td>
+      <td><button class="btn btn-ghost btn-sm" style="padding:5px 10px;color:#cc3333;border-color:#f0d0d0;background:#fff5f5" onclick="deleteEntry('${e.id}')">×</button></td>
+    </tr>`;
+  }).join('');
+  container.innerHTML = `
+    <table class="entries-table">
+      <thead><tr>
+        <th>Projeto</th><th>Data</th><th>Período</th><th>Duração</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function updateSummary() {
+  const now = new Date();
+  const todayISO  = now.toISOString().split('T')[0];
+  const weekAgo   = new Date(now - 7 * 86400000).toISOString().split('T')[0];
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+
+  const todayE  = entries.filter(e => e.dateISO === todayISO);
+  const weekE   = entries.filter(e => e.dateISO >= weekAgo);
+  const monthE  = entries.filter(e => e.dateISO >= monthStart);
+
+  const sumSec = arr => arr.reduce((s, e) => s + e.duration, 0);
+  const fmtHM  = s => `${Math.floor(s/3600)}h ${String(Math.floor((s%3600)/60)).padStart(2,'0')}m`;
+  const uniqProj = arr => new Set(arr.map(e => e.projectId)).size;
+
+  document.getElementById('summaryToday').textContent        = fmtHM(sumSec(todayE));
+  document.getElementById('summaryTodayEntries').textContent = `${todayE.length} registro${todayE.length!==1?'s':''}`;
+  document.getElementById('summaryWeek').textContent         = fmtHM(sumSec(weekE));
+  document.getElementById('summaryWeekEntries').textContent  = `${weekE.length} registro${weekE.length!==1?'s':''}`;
+  document.getElementById('summaryMonth').textContent        = fmtHM(sumSec(monthE));
+  document.getElementById('summaryMonthProjects').textContent= `${uniqProj(monthE)} projeto${uniqProj(monthE)!==1?'s':''}`;
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  const header = 'Projeto,Data,Início,Fim,Duração (seg),Duração (hh:mm:ss)';
+  const rows = entries.map(e =>
+    `"${e.projectName}",${e.date},${e.startTime},${e.endTime},${e.duration},${formatDuration(e.duration)}`
+  );
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `aa-time-tracker-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+// ── UTILS ──
+function formatDuration(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+init();
+</script>
+</body>
+</html>
